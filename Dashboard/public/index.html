@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>NSM ITM Sensor Station</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="assets/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="assets/css/dashboard.css" rel="stylesheet">
+  </head>
+
+  <body>
+    <nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
+      <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">NSM-ITM Sensor - Test</a>
+      <input class="form-control form-control-dark w-100 d-none" type="text" placeholder="Search" aria-label="Search">
+     
+    </nav>
+
+    <div class="container-fluid">
+      <div class="row">
+     
+        <main role="main" class="col-md-12 col-lg-12 px-4">
+          <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <h1 class="h2">Temperature - Dashboard</h1>
+           
+          </div>
+
+          <h2>AHU1-5</h2>
+          <canvas class="my-4 w-100" id="AHU1-5" width="900" height="380"></canvas>
+
+          <hr>
+          <h2>AHU6-7</h2>
+          <canvas class="my-4 w-100" id="AHU6-7" width="900" height="380"></canvas>
+
+          <hr>
+          <h2>AHU8-9</h2>
+          <canvas class="my-4 w-100" id="AHU8-9" width="900" height="380"></canvas>
+
+          <hr>
+          <h2>AHU10</h2>
+          <canvas class="my-4 w-100" id="AHU10" width="900" height="380"></canvas>
+
+          <hr>
+          <h2>AHU 11</h2>
+          <canvas class="my-4 w-100" id="AHU11" width="900" height="380"></canvas>
+
+          <hr>
+          <h2>ServerRoom</h2>
+          <canvas class="my-4 w-100" id="ServerRoom" width="900" height="380"></canvas>
+
+        </main>
+      </div>
+    </div>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script>window.jQuery || document.write('<script src="assets/js/vendor/jquery-slim.min.js"><\/script>')</script>
+    <!-- Graphs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.1/Chart.min.js"></script>
+
+    <script src="assets/js/vendor/popper.min.js"></script>
+    <script src="assets/js/bootstrap.min.js"></script>
+
+    <!-- Icons -->
+    <script src="https://unpkg.com/feather-icons/dist/feather.min.js"></script>
+    <script>
+      feather.replace()
+    </script>
+
+    <script>
+      
+      function createChart(stationName, data) {
+
+        var ctx = document.getElementById(stationName);
+
+        Chart.pluginService.register({
+        afterDraw: function(chartInstance, easing) {
+
+          var lineOpts = chartInstance.options.drawHorizontalLine;
+          if (lineOpts) {
+
+            for(i in lineOpts) {
+
+              var yAxis = chartInstance.scales["y-axis-0"];
+              var yValueStart = yAxis.getPixelForValue(lineOpts[i].lineY[0], 0, 0, true);
+              var yValueEnd = yAxis.getPixelForValue(lineOpts[i].lineY[1], 0, 0, true);
+
+              var xAxis = chartInstance.scales["x-axis-0"];
+              var xValueStart = xAxis.getPixelForTick(0) - 5;
+              //var xValueEnd = xAxis.getPixelForTick(xAxis.ticks.length-1) + 15/*xAxis.right*/;
+              var xValueEnd = xAxis.right;
+
+              var ctx = chartInstance.chart.ctx;
+              ctx.save();
+
+              // la ligne en pointillés
+
+              ctx.setLineDash([15, 15]);
+              ctx.strokeStyle = lineOpts[i].lineColor;
+              ctx.lineWidth = 2.5;
+              ctx.beginPath();
+              ctx.moveTo(xValueStart, yValueStart);
+              ctx.lineTo(xValueEnd, yValueEnd);
+              ctx.stroke();
+
+              ctx.restore();
+
+            }
+          }
+        }
+      });
+
+
+
+        var myChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: data.label,
+            datasets: [{
+              data: data.tempValue,
+              lineTension: 0,
+              backgroundColor: 'transparent',
+              borderColor: '#007bff',
+              borderWidth: 4,
+              pointBackgroundColor: '#007bff'
+            }]
+          },
+          options: {
+            scales: {
+              yAxes: [{
+                ticks: {
+                  beginAtZero: false
+                }
+              }]
+            },
+            legend: {
+              display: false,
+            },
+            drawHorizontalLine: [
+                                  {
+                                    lineY: [23, 23],
+                                    lineColor: "rgba(255, 0, 0, 0.85)"
+                                  },
+                                  {
+                                    lineY: [25, 25],
+                                    lineColor: "rgba(255, 0, 0, 0.85)"
+                                  }
+            ]
+
+          }
+        });
+
+      }
+
+      // pull data
+      function stationRead(stationName) {
+        firebase.database().ref('/'+stationName).once('value').then(function(snapshot) {
+          
+          var allData = snapshot.val();
+          
+          var readData = [];
+
+          for(i in allData) {
+            if(i != 'lastUpdate') {
+              readData.push(allData[i])
+            }
+          }
+
+          readData = readData.slice(-120);    // get only last N data points
+
+          let label = [];
+          let tempValue = [];
+          let humidValue = [];
+          
+          for(i in readData) {
+            let d = new Date(readData[i].timestamp)
+            let min = d.getMinutes();
+
+            if(min <10) {
+              min = '0'+min;
+            }
+
+            label.push(d.getHours()+':'+min);
+            tempValue.push(readData[i].temperature);
+            humidValue.push(readData[i].humidity);
+          }
+
+          let data = {};
+          data.label = label;
+          data.tempValue = tempValue;
+
+          createChart(stationName, data)
+          
+          // prune old items after reading
+          //pruneOldEntry(stationName)
+
+        });
+      }
+
+      // manually remove any entries older than 36 hrs
+      function pruneOldEntry(stationName) {
+        var ref = firebase.database().ref('/'+stationName);
+        var now = Date.now();
+        var cutoff = now - (36 * 60 * 60 * 1000);    // previous 36 hr
+        var old = ref.orderByChild('timestamp').endAt(cutoff);
+
+        var listener = old.on('child_added', function(snapshot) {
+          
+          if(snapshot.val().hasOwnProperty('timestamp'))
+            //console.log(snapshot.val());
+            snapshot.ref.remove();
+        });
+
+      }
+
+    </script>
+
+    <script src="https://www.gstatic.com/firebasejs/5.5.3/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.5.3/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.5.3/firebase-database.js"></script>
+
+    <script>
+        var config = {
+          apiKey: "XXXXXXXXXXXXX",
+          authDomain: "XXXXXXXXXXXXX",
+          databaseURL: "XXXXXXXXXXXXX"
+        };
+        
+        firebase.initializeApp(config);
+
+        // Get a reference to the database service
+        var database = firebase.database();
+        
+        // Read snapshot data
+        stationRead('AHU1-5');
+        stationRead('AHU6-7');
+        stationRead('AHU8-9');
+        stationRead('AHU10');
+        stationRead('AHU11');
+        stationRead('ServerRoom');
+
+        // sign in as anonymous 
+        firebase.auth().signInAnonymously().catch(function(error) {
+          
+          var errorCode = error.code;
+          var errorMessage = error.message;
+          
+          console.log(errorCode, ' ', errorMessage);
+
+        });
+
+        // once authenticated
+        firebase.auth().onAuthStateChanged(function(user) {
+          if (user) {
+            var isAnonymous = user.isAnonymous;
+            var uid = user.uid;
+            console.log('Logged in as: ', uid);
+
+            // prune when applicable
+            pruneOldEntry('AHU1-5');
+            pruneOldEntry('AHU6-7');
+            pruneOldEntry('AHU8-9');
+            pruneOldEntry('AHU10');
+            pruneOldEntry('AHU11');
+            pruneOldEntry('ServerRoom');
+          } 
+
+        });
+
+    </script>
+
+   
+  </body>
+</html>
