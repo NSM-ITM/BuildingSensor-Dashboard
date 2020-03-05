@@ -3,6 +3,10 @@ A part of small pilot IoT projects for building management of Information Techno
 
 ---
 
+## Current running dashboard can be found [here](https://nsmitm-d3b46.firebaseapp.com/)
+
+---
+
 ## Project Element:
 - NodeMCU + DHT11 & HTML Dashboard for temperature monitoring system in NSM's buildings
 
