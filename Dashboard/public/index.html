@@ -23,37 +23,66 @@
     </nav>
 
     <div class="container-fluid">
-      <div class="row">
-     
+      
+      <div class="row">     
+      
         <main role="main" class="col-md-12 col-lg-12 px-4">
+      
           <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-            <h1 class="h2">Temperature - Dashboard</h1>
-           
+            <h1 class="h2">Building Sensor - Dashboard</h1>
           </div>
 
-          <h2>AHU1-5</h2>
-          <canvas class="my-4 w-100" id="AHU1-5" width="900" height="380"></canvas>
+          <div class="container-fluid"> 
 
-          <hr>
-          <h2>AHU6-7</h2>
-          <canvas class="my-4 w-100" id="AHU6-7" width="900" height="380"></canvas>
+            <ul  class="nav nav-tabs">
+                <li class=" nav-item">
+                  <a class="active nav-link" href="#temp-tab" data-toggle="tab">Temperature Sensor</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#dust-tab" data-toggle="tab">Dust Sensor</a>
+                </li>
+              </ul>
 
-          <hr>
-          <h2>AHU8-9</h2>
-          <canvas class="my-4 w-100" id="AHU8-9" width="900" height="380"></canvas>
+              <div class="tab-content clearfix">
+                <div class="tab-pane active" id="temp-tab">
+                  
+                  <h2>AHU1-5</h2>
+                  <canvas class="my-4 w-100" id="AHU1-5" width="900" height="380"></canvas>
 
-          <hr>
-          <h2>AHU10</h2>
-          <canvas class="my-4 w-100" id="AHU10" width="900" height="380"></canvas>
+                  <hr>
+                  <h2>AHU6-7</h2>
+                  <canvas class="my-4 w-100" id="AHU6-7" width="900" height="380"></canvas>
 
-          <hr>
-          <h2>AHU 11</h2>
-          <canvas class="my-4 w-100" id="AHU11" width="900" height="380"></canvas>
+                  <hr>
+                  <h2>AHU8-9</h2>
+                  <canvas class="my-4 w-100" id="AHU8-9" width="900" height="380"></canvas>
 
-          <hr>
-          <h2>ServerRoom</h2>
-          <canvas class="my-4 w-100" id="ServerRoom" width="900" height="380"></canvas>
+                  <hr>
+                  <h2>AHU10</h2>
+                  <canvas class="my-4 w-100" id="AHU10" width="900" height="380"></canvas>
 
+                  <hr>
+                  <h2>AHU 11</h2>
+                  <canvas class="my-4 w-100" id="AHU11" width="900" height="380"></canvas>
+
+                  <hr>
+                  <h2>ServerRoom</h2>
+                  <canvas class="my-4 w-100" id="ServerRoom" width="900" height="380"></canvas>
+
+
+                </div>
+
+                <div class="tab-pane" id="dust-tab">
+                    
+                  <h2>PM2.5 TEST Station (ออฟฟิศกองวิชาการ) </h2>
+                  <canvas class="my-4 w-100" id="DustStation_TEST" width="900" height="380"></canvas>
+
+                </div>
+              </div>
+
+          </div>
+
+          
         </main>
       </div>
     </div>
@@ -159,6 +188,93 @@
         });
 
       }
+ 
+      function createDustChart(stationName, data) {
+
+        var ctx = document.getElementById(stationName);
+
+        Chart.pluginService.register({
+        afterDraw: function(chartInstance, easing) {
+
+          var lineOpts = chartInstance.options.drawHorizontalLine;
+          if (lineOpts) {
+
+            for(i in lineOpts) {
+
+              var yAxis = chartInstance.scales["y-axis-0"];
+              var yValueStart = yAxis.getPixelForValue(lineOpts[i].lineY[0], 0, 0, true);
+              var yValueEnd = yAxis.getPixelForValue(lineOpts[i].lineY[1], 0, 0, true);
+
+              var xAxis = chartInstance.scales["x-axis-0"];
+              var xValueStart = xAxis.getPixelForTick(0) - 5;
+              //var xValueEnd = xAxis.getPixelForTick(xAxis.ticks.length-1) + 15/*xAxis.right*/;
+              var xValueEnd = xAxis.right;
+
+              var ctx = chartInstance.chart.ctx;
+              ctx.save();
+
+              ctx.setLineDash([15, 15]);
+              ctx.strokeStyle = lineOpts[i].lineColor;
+              ctx.lineWidth = 2.5;
+              ctx.beginPath();
+              ctx.moveTo(xValueStart, yValueStart);
+              ctx.lineTo(xValueEnd, yValueEnd);
+              ctx.stroke();
+
+              ctx.restore();
+
+            }
+          }
+        }
+      });
+
+        var myChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: data.label,
+            datasets: [{
+              label: 'PM 2.5',
+              data: data.tempValue,
+              lineTension: 0,
+              backgroundColor: 'transparent',
+              borderColor: '#007bff',
+              borderWidth: 4,
+              pointBackgroundColor: '#007bff'
+            }]
+          },
+          options: {
+            legend: {
+              display: true,
+              position: 'bottom',
+              labels: {
+                fontColor: "#000080",
+              }
+            },
+            scales: {
+              yAxes: [{
+                ticks: {
+                  beginAtZero: false
+                }
+              }]
+            },
+            legend: {
+              display: false,
+            },
+            drawHorizontalLine: [
+                                  // {
+                                  //   lineY: [23, 23],
+                                  //   lineColor: "rgba(255, 0, 0, 0.85)"
+                                  // },
+                                  // {
+                                  //   lineY: [25, 25],
+                                  //   lineColor: "rgba(255, 0, 0, 0.85)"
+                                  // }
+            ]
+
+          }
+        });
+
+      }
 
       // pull data
       function stationRead(stationName) {
@@ -205,6 +321,55 @@
         });
       }
 
+      // pull dust data
+      function dustStationRead(stationName) {
+        firebase.database().ref('/'+stationName).once('value').then(function(snapshot) {
+          
+          var allData = snapshot.val();
+          
+          var readData = [];
+
+          for(i in allData) {
+            if(i != 'lastUpdate') {
+              readData.push(allData[i])
+            }
+          }
+
+          readData = readData.slice(-120);    // get only last N data points
+
+          let label = [];
+          let pm1_0 = [];
+          let pm2_5 = [];
+          let pm10 = [];
+          let humidValue = [];
+          
+          for(i in readData) {
+            let d = new Date(readData[i].timestamp)
+            let min = d.getMinutes();
+
+            if(min <10) {
+              min = '0'+min;
+            }
+
+            label.push(d.getHours()+':'+min);
+            pm1_0.push(readData[i].pm1_0);
+            pm2_5.push(readData[i].pm2_5);
+            pm10.push(readData[i].pm10);
+            
+          }
+
+          let data = {};
+          data.label = label;
+          data.tempValue = pm2_5;
+
+          createDustChart(stationName, data)
+          
+          // prune old items after reading
+          //pruneOldEntry(stationName)
+
+        });
+      }
+
       // manually remove any entries older than 36 hrs
       function pruneOldEntry(stationName) {
         var ref = firebase.database().ref('/'+stationName);
@@ -229,9 +394,9 @@
 
     <script>
         var config = {
-          apiKey: "XXXXXXXXXXXXX",
-          authDomain: "XXXXXXXXXXXXX",
-          databaseURL: "XXXXXXXXXXXXX"
+          apiKey: "AIzaSyCd7Xa_bMl_iWXdEzLzAunmzQY8Av2ljew",
+          authDomain: "nsmitm-d3b46.firebaseapp.com",
+          databaseURL: "https://nsmitm-d3b46.firebaseio.com"
         };
         
         firebase.initializeApp(config);
@@ -246,6 +411,9 @@
         stationRead('AHU10');
         stationRead('AHU11');
         stationRead('ServerRoom');
+
+
+        dustStationRead('DustStation_TEST');
 
         // sign in as anonymous 
         firebase.auth().signInAnonymously().catch(function(error) {
@@ -271,6 +439,8 @@
             pruneOldEntry('AHU10');
             pruneOldEntry('AHU11');
             pruneOldEntry('ServerRoom');
+
+            pruneOldEntry('DustStation_TEST');
           } 
 
         });
