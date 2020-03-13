@@ -27,6 +27,7 @@ A part of small pilot IoT projects for building management of Information Techno
   - [ArduinoJson](https://github.com/bblanchon/ArduinoJson)
   - [DHT Sensor](https://github.com/adafruit/DHT-sensor-library)
   - [Firebase Arduino](https://github.com/FirebaseExtended/firebase-arduino) * SSL is updated every now and then, updating library and re-upload to NodeMCU is required
+  - [PMS](https://github.com/fu-hsi/pms) - Plantower PMS7003
 
 ---
 
