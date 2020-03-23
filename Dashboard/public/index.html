@@ -74,8 +74,12 @@
 
                 <div class="tab-pane" id="dust-tab">
                     
-                  <h2>PM2.5 TEST Station (ออฟฟิศกองวิชาการ) </h2>
+                  <h2>PM2.5 TEST Station 1 (ออฟฟิศกองวิชาการ) </h2>
                   <canvas class="my-4 w-100" id="DustStation_TEST" width="900" height="380"></canvas>
+
+                  <hr>
+                  <h2>PM2.5 TEST Station 2 (ออฟฟิศกองวิชาการ) </h2>
+                  <canvas class="my-4 w-100" id="DustStation_PMS3003TEST_1" width="900" height="380"></canvas>
 
                 </div>
               </div>
@@ -233,13 +237,31 @@
           data: {
             labels: data.label,
             datasets: [{
+              label: 'PM 1.0',
+              data: data.tempValue0,
+              lineTension: 0,
+              backgroundColor: 'transparent',
+              borderColor: '#C0392B',
+              borderWidth: 4,
+              pointBackgroundColor: '#C0392B'
+            },
+            {
               label: 'PM 2.5',
-              data: data.tempValue,
+              data: data.tempValue1,
               lineTension: 0,
               backgroundColor: 'transparent',
               borderColor: '#007bff',
               borderWidth: 4,
               pointBackgroundColor: '#007bff'
+            },
+            {
+              label: 'PM 10',
+              data: data.tempValue2,
+              lineTension: 0,
+              backgroundColor: 'transparent',
+              borderColor: '#1E8449',
+              borderWidth: 4,
+              pointBackgroundColor: '#1E8449'
             }]
           },
           options: {
@@ -254,23 +276,17 @@
               yAxes: [{
                 ticks: {
                   beginAtZero: false
+                },
+                scaleLabel: {
+                  display: true,
+                  labelString: 'Particle Density (μg/m3)'
                 }
               }]
             },
             legend: {
-              display: false,
+              display: true,
             },
-            drawHorizontalLine: [
-                                  // {
-                                  //   lineY: [23, 23],
-                                  //   lineColor: "rgba(255, 0, 0, 0.85)"
-                                  // },
-                                  // {
-                                  //   lineY: [25, 25],
-                                  //   lineColor: "rgba(255, 0, 0, 0.85)"
-                                  // }
-            ]
-
+            
           }
         });
 
@@ -341,8 +357,7 @@
           let pm1_0 = [];
           let pm2_5 = [];
           let pm10 = [];
-          let humidValue = [];
-          
+                    
           for(i in readData) {
             let d = new Date(readData[i].timestamp)
             let min = d.getMinutes();
@@ -360,7 +375,9 @@
 
           let data = {};
           data.label = label;
-          data.tempValue = pm2_5;
+          data.tempValue0 = pm1_0;
+          data.tempValue1 = pm2_5;
+          data.tempValue2 = pm10;
 
           createDustChart(stationName, data)
           
@@ -414,6 +431,7 @@
 
 
         dustStationRead('DustStation_TEST');
+        dustStationRead('DustStation_PMS3003TEST_1');
 
         // sign in as anonymous 
         firebase.auth().signInAnonymously().catch(function(error) {
@@ -441,6 +459,7 @@
             pruneOldEntry('ServerRoom');
 
             pruneOldEntry('DustStation_TEST');
+            pruneOldEntry('DustStation_PMS3003TEST_1');
           } 
 
         });
